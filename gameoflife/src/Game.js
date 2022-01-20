@@ -1,21 +1,22 @@
 import React from "react";
 import "./Game.css";
 
-const CELLSIZE = 4;
+const CELLSIZE = 16;
 const WIDTH = 800;
 const HEIGHT = 600;
 
 class Cell extends React.Component {
   render() {
-    const { x, y } = this.props;
+    const { x, y, z } = this.props;
     return (
       <div
         className="Cell"
         style={{
-          left: `${CELLSIZE * x + 1}px`,
-          top: `${CELLSIZE * y + 1}px`,
-          width: `${CELLSIZE - 1}px`,
-          height: `${CELLSIZE - 1}px`,
+          left: `${CELLSIZE * x}px`,
+          top: `${CELLSIZE * y}px`,
+          width: `${CELLSIZE}px`,
+          height: `${CELLSIZE}px`,
+          background: `${z ? 'rgb(0,0,0,0)' : 'rgb(0,0,0)'}`
         }}
       />
     );
@@ -59,15 +60,15 @@ class Game extends React.Component {
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
         let neighbors = this.calculateNeghbors(this.board, x, y);
-        if (this.board[y][x]) {
+        if (this.board[y][x][0]) {
           if (neighbors === 2 || neighbors === 3) {
-            newBoard[y][x] = true;
+            newBoard[y][x][0] = true;
           } else {
-            newBoard[y][x] = false;
+            newBoard[y][x][0] = false;
           }
         } else {
-          if (!this.board[y][x] && neighbors === 3) {
-            newBoard[y][x] = true;
+          if (!this.board[y][x][0] && neighbors === 3) {
+            newBoard[y][x][0] = true;
           }
         }
       }
@@ -101,7 +102,7 @@ class Game extends React.Component {
         x1 < this.cols &&
         y1 >= 0 &&
         y1 < this.rows &&
-        board[y1][x1]
+        board[y1][x1][0] === true
       ) {
         neighbors++;
       }
@@ -125,7 +126,7 @@ class Game extends React.Component {
     const x = Math.floor(offsetX / CELLSIZE);
     const y = Math.floor(offsetY / CELLSIZE);
     if (x >= 0 && x <= this.cols && y >= 0 && y <= this.rows) {
-      this.board[y][x] = !this.board[y][x];
+      this.board[y][x][0] = !this.board[y][x][0];
     }
     this.setState({ cells: this.makeCells() });
   }
@@ -138,7 +139,7 @@ class Game extends React.Component {
   handleRandom = () => {
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
-        this.board[y][x] = (Math.random() >= 0.5);
+        this.board[y][x][0] = (Math.random() >= 0.5);
       }
     }
     this.setState({ cells: this.makeCells() });
@@ -149,7 +150,8 @@ class Game extends React.Component {
     for (let y = 0; y < this.rows; y++) {
       board[y] = [];
       for (let x = 0; x < this.cols; x++) {
-        board[y][x] = false;
+        board[y][x] = [];
+        board[y][x][0] = false;
       }
     }
     return board;
@@ -159,8 +161,11 @@ class Game extends React.Component {
     let cells = [];
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
-        if (this.board[y][x]) {
-          cells.push({ x, y });
+        if (this.board[y][x][0]) {
+          cells.push({ x, y, z: true });
+        }
+        else {
+          cells.push({ x, y, z: false });
         }
       }
     }
@@ -168,7 +173,7 @@ class Game extends React.Component {
   }
 
   render() {
-    const { cells } = this.state;
+    const { cells, isRunning } = this.state;
     return (
       <div>
         <div
@@ -176,7 +181,6 @@ class Game extends React.Component {
           style={{
             width: WIDTH,
             height: HEIGHT,
-            backgroundSize: `${CELLSIZE}px ${CELLSIZE}px`,
           }}
           onClick={this.handleClick}
           ref={(n) => {
@@ -184,7 +188,7 @@ class Game extends React.Component {
           }}
         >
           {cells.map((cell) => (
-            <Cell x={cell.x} y={cell.y} key={`${cell.x},${cell.y}`} />
+            <Cell x={cell.x} y={cell.y} z={cell.z} key={`${cell.x},${cell.y},${cell.z}`} />
           ))}
         </div>
         <div className="controls">
@@ -194,7 +198,7 @@ class Game extends React.Component {
             onchange={this.handleIntervalChange}
           />{" "}
           msec
-          {this.isRunning ? (
+          {isRunning ? (
             <button className="button" onClick={this.stopGame}>
               Stop
             </button>
